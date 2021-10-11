@@ -15,4 +15,8 @@ def parse_args():
 
     parser.add_argument("--img-size", help="Image size", nargs=2, default=[512, 512])
 
+    parser.add_argument(
+        "--learning-rate", help="Learning rate of the model", type=float, default=1e-4
+    )
+
     return parser.parse_args()
