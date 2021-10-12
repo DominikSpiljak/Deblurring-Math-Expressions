@@ -15,6 +15,7 @@ def create_transforms(
             transforms.Lambda(lambd=SquarePad()),
             transforms.Resize(img_size),
             transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
 
