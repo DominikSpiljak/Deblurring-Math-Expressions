@@ -26,7 +26,7 @@ class DBGenerator(nn.Module):
             nn.Conv2d(res_blocks_dim, res_blocks_dim, res_kernel_size, padding="same"),
             nn.LeakyReLU(lrelu_slope),
             nn.Conv2d(res_blocks_dim, 3, res_kernel_size, padding="same"),
-            nn.Tanh(),
+            nn.Tanh()
         )
 
     def forward(self, batch):
