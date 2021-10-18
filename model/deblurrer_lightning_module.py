@@ -53,7 +53,7 @@ class DeblurrerLightningModule(pl.LightningModule):
 
             prediction = self.db_discriminator(self.deblurred)
             g_loss_bce = self.bce_loss(prediction, clear_labels)
-            g_loss_l1 = self.l1_loss(self.deblurred, batch["blurred"])
+            g_loss_l1 = self.l1_loss(self.deblurred, batch["non_blurred"])
 
             g_loss = g_loss_l1 + g_loss_bce * self.alpha
             self.log("Generator loss", g_loss, prog_bar=True)
