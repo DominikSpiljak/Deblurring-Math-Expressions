@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import torch
 from torch.utils import data
 
-from torchvision import make_grid
+from torchvision.utils import make_grid
 
 
 def calculate_bce_loss(predictions, real):
@@ -57,6 +57,12 @@ class DeblurrerLightningModule(pl.LightningModule):
 
             g_loss = g_loss_l1 + g_loss_bce * self.alpha
             self.log("Generator loss", g_loss, prog_bar=True)
+
+            grid = make_grid(
+                torch.cat((batch["blurred"], self.deblurred.detach()), 0),
+                normalize=True,
+            )
+            self.logger.experiment.add_image(f"Batch {batch_idx} deblurred", grid, 0)
 
             return g_loss
 

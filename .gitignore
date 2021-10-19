@@ -131,3 +131,6 @@ dmypy.json
 
 # logs
 lightning_logs/
+
+# config files
+clearml.conf

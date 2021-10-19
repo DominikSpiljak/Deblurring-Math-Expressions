@@ -27,5 +27,15 @@ def parse_args():
         "--log-every-n-steps", help="Time interval for logging", type=int, default=100
     )
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=1)
+    parser.add_argument("--clearml-queue", help="ClearML queue used for training")
+    parser.add_argument("--task-name", help="ClearML task name used for training")
+    parser.add_argument("--tags", help="Tags used for ClearML")
+    parser.add_argument(
+        "--ngpus",
+        help="Number of gpus to use. If 1 number is entered then"
+        "that many gpus will be used, you can also enter numbers "
+        "seperated by comma for specific gpu devices (1,2,3).",
+        default=-1,
+    )
 
     return parser.parse_args()

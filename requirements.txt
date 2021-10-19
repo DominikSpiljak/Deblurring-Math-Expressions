@@ -3,3 +3,5 @@ opencv-python
 torch
 torchvision
 pytorch-lightning
+clearml
+google-cloud-storage
