@@ -49,17 +49,17 @@ class DeblurrerLightningModule(pl.LightningModule):
 
         if optimizer_idx == 0:
             clear_labels = torch.ones(batch["blurred"].size(0), 1, device=self.device)
-            self.deblurred = self.db_generator(batch["blurred"])
+            deblurred = self.db_generator(batch["blurred"])
 
-            prediction = self.db_discriminator(self.deblurred)
+            prediction = self.db_discriminator(deblurred)
             g_loss_bce = self.bce_loss(prediction, clear_labels)
-            g_loss_l1 = self.l1_loss(self.deblurred, batch["non_blurred"])
+            g_loss_l1 = self.l1_loss(deblurred, batch["non_blurred"])
 
             g_loss = g_loss_l1 + g_loss_bce * self.alpha
             self.log("Generator loss", g_loss, prog_bar=True)
 
             grid = make_grid(
-                torch.cat((batch["blurred"], self.deblurred.detach()), 0),
+                torch.cat((batch["blurred"], deblurred.detach()), 0),
                 normalize=True,
             )
             self.logger.experiment.add_image(f"Batch {batch_idx} deblurred", grid, 0)
@@ -77,7 +77,9 @@ class DeblurrerLightningModule(pl.LightningModule):
             prediction = self.db_discriminator(batch["non_blurred"])
             d_real_loss = self.bce_loss(prediction, real_labels)
 
-            prediction = self.db_discriminator(self.deblurred.detach())
+            prediction = self.db_discriminator(
+                self.db_generator(batch["blurred"]).detach()
+            )
             d_fake_loss = self.bce_loss(prediction, fake_labels)
 
             d_loss = (d_real_loss + d_fake_loss) / 2.0
