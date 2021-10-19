@@ -5,6 +5,7 @@ from model.modules.db_generator import DBGenerator
 from model.modules.discriminator import Discriminator
 import pytorch_lightning as pl
 from clearml import Task
+from loggers.loggers import setup_loggers
 
 
 def _train(args):
@@ -45,6 +46,8 @@ def _train(args):
         num_workers=args.num_workers,
         alpha=args.alpha,
     )
+
+    setup_loggers(args, module)
 
     trainer = pl.Trainer(
         log_every_n_steps=args.log_every_n_steps,

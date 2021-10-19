@@ -37,5 +37,16 @@ def parse_args():
         "seperated by comma for specific gpu devices (1,2,3).",
         default=-1,
     )
+    parser.add_argument(
+        "--disable-image-logging",
+        help="Wether to disable model generated images logging",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--max-batches-logged-per-epoch",
+        help="Number of image batches logged per epoch",
+        type=int,
+        default=2,
+    )
 
     return parser.parse_args()

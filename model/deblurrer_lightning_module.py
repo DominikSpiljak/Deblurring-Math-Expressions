@@ -3,8 +3,6 @@ import torch.nn.functional as F
 import torch
 from torch.utils import data
 
-from torchvision.utils import make_grid
-
 
 def calculate_bce_loss(predictions, real):
     return F.binary_cross_entropy_with_logits(predictions, real)
@@ -58,13 +56,12 @@ class DeblurrerLightningModule(pl.LightningModule):
             g_loss = g_loss_l1 + g_loss_bce * self.alpha
             self.log("Generator loss", g_loss, prog_bar=True)
 
-            grid = make_grid(
-                torch.cat((batch["blurred"], deblurred.detach()), 0),
-                normalize=True,
-            )
-            self.logger.experiment.add_image(f"Batch {batch_idx} deblurred", grid, 0)
-
-            return g_loss
+            return {
+                "loss": g_loss,
+                "blurred": batch["blurred"],
+                "deblurred": deblurred.detach(),
+                "optimizer_idx": optimizer_idx,
+            }
 
         if optimizer_idx == 1:
             fake_labels = torch.zeros(
@@ -85,7 +82,14 @@ class DeblurrerLightningModule(pl.LightningModule):
             d_loss = (d_real_loss + d_fake_loss) / 2.0
 
             self.log("Discriminator loss", d_loss, prog_bar=True)
-            return d_loss
+
+            return {"loss": d_loss, "optimizer_idx": optimizer_idx}
+
+    def training_step_end(self, outputs):
+        self.log_metrics(self.train_loggers, outputs)
+
+    def on_train_epoch_end(self):
+        self.compute_loggers(self.train_loggers, self.current_epoch)
 
     def configure_optimizers(self):
         optimizer_dbG = torch.optim.Adam(
@@ -95,6 +99,14 @@ class DeblurrerLightningModule(pl.LightningModule):
             self.db_discriminator.parameters(), lr=self.learning_rate
         )
         return [optimizer_dbG, optimizer_dbD]
+
+    def log_metrics(loggers, outputs):
+        for logger in loggers:
+            logger(outputs)
+
+    def compute_loggers(loggers, epoch):
+        for logger in loggers:
+            logger.compute(epoch)
 
     def train_dataloader(self):
         dataloader = data.DataLoader(
