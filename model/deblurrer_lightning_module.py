@@ -48,7 +48,7 @@ class DeblurrerLightningModule(pl.LightningModule):
     def training_step(self, batch, batch_idx, optimizer_idx):
 
         if optimizer_idx == 0:
-            clear_labels = torch.ones(batch["blurred"].size(0), 1)
+            clear_labels = torch.ones(batch["blurred"].size(0), 1, device=self.device)
             self.deblurred = self.db_generator(batch["blurred"])
 
             prediction = self.db_discriminator(self.deblurred)
@@ -67,8 +67,12 @@ class DeblurrerLightningModule(pl.LightningModule):
             return g_loss
 
         if optimizer_idx == 1:
-            fake_labels = torch.zeros(batch["non_blurred"].size(0), 1)
-            real_labels = torch.ones(batch["non_blurred"].size(0), 1)
+            fake_labels = torch.zeros(
+                batch["non_blurred"].size(0), 1, device=self.device
+            )
+            real_labels = torch.ones(
+                batch["non_blurred"].size(0), 1, device=self.device
+            )
 
             prediction = self.db_discriminator(batch["non_blurred"])
             d_real_loss = self.bce_loss(prediction, real_labels)
