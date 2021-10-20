@@ -19,7 +19,7 @@ class ImageLogger:
 
     def __call__(self, outputs):
         if (
-            outputs["optimizer_idx"] == 0
+            torch.all(outputs["optimizer_idx"] == 0)
             and len(self.images) <= self.max_logged_per_epoch
         ):
             self.images.append(torch.cat((outputs["blurred"], outputs["deblurred"]), 0))

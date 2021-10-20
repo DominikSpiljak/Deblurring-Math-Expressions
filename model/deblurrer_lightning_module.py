@@ -87,6 +87,7 @@ class DeblurrerLightningModule(pl.LightningModule):
 
     def training_step_end(self, outputs):
         self.log_metrics(self.train_loggers, outputs)
+        return outputs["loss"]
 
     def on_train_epoch_end(self):
         self.compute_loggers(self.train_loggers, self.current_epoch)
@@ -100,11 +101,11 @@ class DeblurrerLightningModule(pl.LightningModule):
         )
         return [optimizer_dbG, optimizer_dbD]
 
-    def log_metrics(loggers, outputs):
+    def log_metrics(self, loggers, outputs):
         for logger in loggers:
             logger(outputs)
 
-    def compute_loggers(loggers, epoch):
+    def compute_loggers(self, loggers, epoch):
         for logger in loggers:
             logger.compute(epoch)
 
