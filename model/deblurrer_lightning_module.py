@@ -87,10 +87,10 @@ class DeblurrerLightningModule(pl.LightningModule):
 
     def training_step_end(self, outputs):
         self.log_metrics(self.train_loggers, outputs)
-        return outputs["loss"]
+        return torch.mean(outputs["loss"])
 
     def on_train_epoch_end(self):
-        self.compute_loggers(self.train_loggers, self.current_epoch)
+        self.compute_loggers(self.train_loggers, self.current_epoch, self.logger)
 
     def configure_optimizers(self):
         optimizer_dbG = torch.optim.Adam(
@@ -105,9 +105,9 @@ class DeblurrerLightningModule(pl.LightningModule):
         for logger in loggers:
             logger(outputs)
 
-    def compute_loggers(self, loggers, epoch):
-        for logger in loggers:
-            logger.compute(epoch)
+    def compute_loggers(self, loggers, epoch, logger):
+        for logger_ in loggers:
+            logger_.compute(epoch, logger)
 
     def train_dataloader(self):
         dataloader = data.DataLoader(
