@@ -36,9 +36,9 @@ def get_dataset(dataset_path, img_size):
             reader = csv.reader(inp)
             for line in reader:
                 if line[0].endswith("9"):
-                    image_paths_val.append(str(dataset_path / line[0]))
+                    image_paths_val.append(str(line[1]))
                 else:
-                    image_paths_train.append(str(dataset_path / line[0]))
+                    image_paths_train.append(str(line[1]))
 
     blur_transformations = create_transforms(img_size, artificial_blur=True)
     no_blur_transformations = create_transforms(img_size, artificial_blur=False)
