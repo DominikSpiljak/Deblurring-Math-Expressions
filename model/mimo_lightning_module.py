@@ -46,23 +46,19 @@ class MIMOUnetModule(pl.LightningModule):
             F.interpolate(batch["non_blurred"], scale_factor=0.5),
             F.interpolate(batch["non_blurred"], scale_factor=0.25),
         ]
-        content_loss = torch.mean(
-            [
-                calculate_l1_loss(out_scale, gt_scale)
-                for out_scale, gt_scale in zip(out, gt)
-            ]
-        )
+        content_loss = (
+            calculate_l1_loss(out[0], gt[0])
+            + calculate_l1_loss(out[1], gt[1])
+            + calculate_l1_loss(out[2], gt[2])
+        ) / 3
 
-        msfr_loss = torch.mean(
-            [
-                calculate_l1_loss(out_scale, gt_scale)
-                for out_scale, gt_scale in zip(out, gt)
-            ]
-        )
+        msfr_loss = (
+            calculate_frequency_reconstruction_loss(out[0], gt[0])
+            + calculate_frequency_reconstruction_loss(out[1], gt[1])
+            + calculate_frequency_reconstruction_loss(out[2], gt[2])
+        ) / 3
 
         loss = content_loss + self.alpha * msfr_loss
-
-        self.log("Loss", loss, prog_bar=True)
 
         return {"blurred": batch["blurred"], "deblurred": out[0].detach(), "loss": loss}
 
@@ -74,7 +70,9 @@ class MIMOUnetModule(pl.LightningModule):
 
     def training_step_end(self, outputs):
         self.log_metrics(self.train_loggers, outputs)
-        return torch.mean(outputs["loss"])
+        loss = torch.mean(outputs["loss"])
+        self.log("loss", loss)
+        return loss
 
     def on_train_epoch_end(self):
         self.compute_loggers(self.train_loggers, self.current_epoch, self.logger)
