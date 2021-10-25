@@ -1,8 +1,7 @@
 from argument_parser import parse_args
 from data.dataset import get_dataset
-from model.deblurrer_lightning_module import DeblurrerLightningModule
-from model.modules.db_generator import DBGenerator
-from model.modules.discriminator import Discriminator
+from model.mimo_unet_modules.mimo_unet import MIMOUnet
+from model.mimo_lightning_module import MIMOUnetModule
 import pytorch_lightning as pl
 from clearml import Task
 from loggers.loggers import setup_loggers
@@ -36,9 +35,8 @@ def _train(args):
 
     dataset_train, dataset_val = get_dataset(args.dataset, args.img_size)
 
-    module = DeblurrerLightningModule(
-        db_generator=DBGenerator(),
-        discriminator=Discriminator(),
+    module = MIMOUnetModule(
+        mimo_unet=MIMOUnet(),
         dataset_train=dataset_train,
         dataset_val=dataset_val,
         learning_rate=args.learning_rate,
@@ -54,7 +52,11 @@ def _train(args):
         gpus=int(args.ngpus) if str(args.ngpus).isnumeric() else args.ngpus,
         accelerator="dp",
     )
-    trainer.fit(module, module.train_dataloader())
+    trainer.fit(
+        module,
+        train_dataloaders=module.train_dataloader(),
+        val_dataloaders=module.val_dataloader(),
+    )
 
 
 def main():

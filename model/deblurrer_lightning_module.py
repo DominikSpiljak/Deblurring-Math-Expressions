@@ -9,7 +9,7 @@ def calculate_bce_loss(predictions, real):
 
 
 def calculate_l1_loss(generated, ground_truth):
-    return F.mse_loss(generated, ground_truth)
+    return F.l1_loss(generated, ground_truth)
 
 
 def collate_fn(batch):
@@ -85,6 +85,23 @@ class DeblurrerLightningModule(pl.LightningModule):
 
             return {"loss": d_loss, "optimizer_idx": optimizer_idx}
 
+    def validation_step(self, batch, batch_idx, optimizer_idx):
+        if optimizer_idx == 0:
+            deblurred = self.db_generator(batch["blurred"])
+            return {
+                "blurred": batch["blurred"],
+                "deblurred": deblurred.detach(),
+                "optimizer_idx": optimizer_idx,
+            }
+        else:
+            return {}
+
+    def validation_step_end(self, outputs):
+        self.log_metrics(self.validation_loggers, outputs)
+
+    def on_validation_epoch_end(self):
+        self.compute_loggers(self.validation_loggers, self.current_epoch, self.logger)
+
     def training_step_end(self, outputs):
         self.log_metrics(self.train_loggers, outputs)
         return torch.mean(outputs["loss"])
@@ -112,6 +129,18 @@ class DeblurrerLightningModule(pl.LightningModule):
     def train_dataloader(self):
         dataloader = data.DataLoader(
             self.dataset_train,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            collate_fn=collate_fn,
+        )
+
+        return dataloader
+
+    def val_dataloader(self):
+        dataloader = data.DataLoader(
+            self.dataset_val,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
