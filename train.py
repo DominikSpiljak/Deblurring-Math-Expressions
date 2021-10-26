@@ -62,7 +62,7 @@ def _train(args):
         ModelCheckpoint(
             save_last=True,
             verbose=True,
-            monitor="loss",
+            monitor="Validation loss",
             save_top_k=args.save_top_k,
             mode="min",
         ),
@@ -74,7 +74,8 @@ def _train(args):
         log_every_n_steps=args.log_every_n_steps,
         gpus=int(args.ngpus) if str(args.ngpus).isnumeric() else args.ngpus,
         accelerator="dp",
-        limit_train_batches=10,
+        limit_train_batches=100,
+        limit_val_batches=10,
     )
 
     if not args.eval_mode:
