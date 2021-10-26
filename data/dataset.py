@@ -17,7 +17,7 @@ def create_transforms(
     ]
     if artificial_blur:
         image_transformations.append(
-            transforms.GaussianBlur(kernel_size=(5, 9), sigma=(2, 9))
+            transforms.GaussianBlur(kernel_size=(17, 35), sigma=(4, 12))
         )
 
     tensor_transformations = [

@@ -60,7 +60,11 @@ class MIMOUnetModule(pl.LightningModule):
 
         loss = content_loss + self.alpha * msfr_loss
 
-        return {"blurred": batch["blurred"], "deblurred": out[0].detach(), "loss": loss}
+        return {
+            "blurred": batch["blurred"],
+            "deblurred": out[0].detach(),
+            "loss": loss,
+        }
 
     def validation_step(self, batch, batch_idx):
         out = self.mimo_unet(batch["blurred"])
@@ -83,7 +87,11 @@ class MIMOUnetModule(pl.LightningModule):
 
         loss = content_loss + self.alpha * msfr_loss
 
-        return {"blurred": batch["blurred"], "deblurred": out[0].detach(), "loss": loss}
+        return {
+            "blurred": batch["blurred"],
+            "deblurred": out[0].detach(),
+            "loss": loss,
+        }
 
     def validation_step_end(self, outputs):
         self.log_metrics(self.validation_loggers, outputs)
