@@ -62,5 +62,5 @@ class ImageDataset(data.Dataset):
         image = Image.open(self.image_paths[index])
         return {
             "blurred": self.blur_transformations(image),
-            "non_blurred": self.blur_transformations(image),
+            "non_blurred": self.no_blur_transformations(image),
         }

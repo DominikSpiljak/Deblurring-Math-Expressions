@@ -15,6 +15,7 @@ def setup_loggers(args, module):
 class ImageLogger:
     def __init__(self, max_logged_per_epoch, batch_size):
         self.max_logged_per_epoch = max_logged_per_epoch
+        self.batch_size = batch_size
         self.images = []
 
     def __call__(self, outputs):
@@ -28,7 +29,7 @@ class ImageLogger:
             grid = make_grid(
                 image,
                 normalize=True,
-                nrow=2,
+                nrow=self.batch_size,
             )
             logger.experiment.add_image(f"Epoch {epoch}, batch {index}", grid, 0)
         self.images = []

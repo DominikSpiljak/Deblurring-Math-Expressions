@@ -74,7 +74,7 @@ def _train(args):
         log_every_n_steps=args.log_every_n_steps,
         gpus=int(args.ngpus) if str(args.ngpus).isnumeric() else args.ngpus,
         accelerator="dp",
-        limit_train_batches=100,
+        limit_train_batches=1000,
         limit_val_batches=10,
     )
 
