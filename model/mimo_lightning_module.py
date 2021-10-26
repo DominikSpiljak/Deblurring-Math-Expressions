@@ -62,6 +62,29 @@ class MIMOUnetModule(pl.LightningModule):
 
         return {"blurred": batch["blurred"], "deblurred": out[0].detach(), "loss": loss}
 
+    def validation_step(self, batch, batch_idx):
+        out = self.mimo_unet(batch["blurred"])
+        gt = [
+            batch["non_blurred"],
+            F.interpolate(batch["non_blurred"], scale_factor=0.5),
+            F.interpolate(batch["non_blurred"], scale_factor=0.25),
+        ]
+        content_loss = (
+            calculate_l1_loss(out[0], gt[0])
+            + calculate_l1_loss(out[1], gt[1])
+            + calculate_l1_loss(out[2], gt[2])
+        ) / 3
+
+        msfr_loss = (
+            calculate_frequency_reconstruction_loss(out[0], gt[0])
+            + calculate_frequency_reconstruction_loss(out[1], gt[1])
+            + calculate_frequency_reconstruction_loss(out[2], gt[2])
+        ) / 3
+
+        loss = content_loss + self.alpha * msfr_loss
+
+        return {"blurred": batch["blurred"], "deblurred": out[0].detach(), "loss": loss}
+
     def validation_step_end(self, outputs):
         self.log_metrics(self.validation_loggers, outputs)
         loss = torch.mean(outputs["loss"])
@@ -85,7 +108,11 @@ class MIMOUnetModule(pl.LightningModule):
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", factor=0.9, patience=3, threshold=1e-5
         )
-        return [optimizer], [scheduler]
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": scheduler,
+            "monitor": "Validation loss",
+        }
 
     def log_metrics(self, loggers, outputs):
         for logger in loggers:
