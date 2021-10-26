@@ -3,7 +3,11 @@ from data.dataset import get_dataset
 from model.mimo_unet_modules.mimo_unet import MIMOUnet
 from model.mimo_lightning_module import MIMOUnetModule
 import pytorch_lightning as pl
-from clearml import Task
+from clearml import Task, StorageManager
+from pytorch_lightning.callbacks import (
+    LearningRateMonitor,
+    ModelCheckpoint,
+)
 from loggers.loggers import setup_loggers
 
 
@@ -14,7 +18,7 @@ def _train(args):
         project_name="im2math",
         task_name=args.task_name,
         output_uri="gs://ai-experiments-artifacts",
-        task_type=Task.TaskTypes.training,
+        task_type=Task.TaskTypes.testing if args.eval_mode else Task.TaskTypes.training,
     )
 
     tags = [str(args.dataset)]
@@ -44,19 +48,39 @@ def _train(args):
         num_workers=args.num_workers,
         alpha=args.alpha,
     )
+    if args.checkpoint:
+        if str(args.checkpoint).startswith("gs"):
+            loaded_model = StorageManager.get_local_copy(args.checkpoint)
+        else:
+            loaded_model = args.checkpoint
+
+        module = MIMOUnetModule.load_from_checkpoint(loaded_model)
 
     setup_loggers(args, module)
 
+    metric_monitor_callbacks = [
+        ModelCheckpoint(
+            save_last=True,
+            verbose=True,
+            monitor="loss",
+            save_top_k=args.save_top_k,
+            mode="min",
+        ),
+        LearningRateMonitor(logging_interval="epoch"),
+    ]
+
     trainer = pl.Trainer(
+        callbacks=metric_monitor_callbacks,
         log_every_n_steps=args.log_every_n_steps,
         gpus=int(args.ngpus) if str(args.ngpus).isnumeric() else args.ngpus,
         accelerator="dp",
+        limit_train_batches=10,
     )
-    trainer.fit(
-        module,
-        train_dataloaders=module.train_dataloader(),
-        val_dataloaders=module.val_dataloader(),
-    )
+
+    if not args.eval_mode:
+        trainer.fit(module)
+
+    trainer.validate(module)
 
 
 def main():

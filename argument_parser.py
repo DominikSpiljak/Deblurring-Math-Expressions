@@ -24,7 +24,7 @@ def parse_args():
         "--alpha", help="Alpha parameter for loss calculating", type=float, default=0.1
     )
     parser.add_argument(
-        "--log-every-n-steps", help="Time interval for logging", type=int, default=100
+        "--log-every-n-steps", help="Time interval for logging", type=int, default=1000
     )
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=1)
     parser.add_argument("--clearml-queue", help="ClearML queue used for training")
@@ -47,6 +47,15 @@ def parse_args():
         help="Number of image batches logged per epoch",
         type=int,
         default=2,
+    )
+    parser.add_argument(
+        "--eval-mode",
+        help="Enables evaluation mode for a checkpoint",
+        action="store_true",
+    )
+    parser.add_argument("--checkpoint", help="Bucket path to checkpoint")
+    parser.add_argument(
+        "--save-top-k", help="Top k checkpoints to save", type=int, default=1
     )
 
     return parser.parse_args()

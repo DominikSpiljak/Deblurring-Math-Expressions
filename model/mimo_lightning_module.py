@@ -64,6 +64,9 @@ class MIMOUnetModule(pl.LightningModule):
 
     def validation_step_end(self, outputs):
         self.log_metrics(self.validation_loggers, outputs)
+        loss = torch.mean(outputs["loss"])
+        self.log("Validation loss", loss)
+        return loss
 
     def on_validation_epoch_end(self):
         self.compute_loggers(self.validation_loggers, self.current_epoch, self.logger)
@@ -71,7 +74,7 @@ class MIMOUnetModule(pl.LightningModule):
     def training_step_end(self, outputs):
         self.log_metrics(self.train_loggers, outputs)
         loss = torch.mean(outputs["loss"])
-        self.log("loss", loss)
+        self.log("Train loss", loss)
         return loss
 
     def on_train_epoch_end(self):
@@ -79,7 +82,10 @@ class MIMOUnetModule(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.mimo_unet.parameters(), lr=self.learning_rate)
-        return optimizer
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", factor=0.9, patience=3, threshold=1e-5
+        )
+        return [optimizer], [scheduler]
 
     def log_metrics(self, loggers, outputs):
         for logger in loggers:
