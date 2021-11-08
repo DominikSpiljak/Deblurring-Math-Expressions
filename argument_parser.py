@@ -57,5 +57,15 @@ def parse_args():
     parser.add_argument(
         "--save-top-k", help="Top k checkpoints to save", type=int, default=1
     )
+    parser.add_argument(
+        "--sigmas",
+        help="Sigmas for Gaussian blur",
+        nargs=2,
+        default=[7, 13],
+        type=float,
+    )
+    parser.add_argument(
+        "--kernel-size", help="Kernel size for Gaussian blur", type=int, default=11
+    )
 
     return parser.parse_args()

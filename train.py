@@ -37,7 +37,9 @@ def _train(args):
         )
         task.execute_remotely(queue_name=args.clearml_queue)
 
-    dataset_train, dataset_val = get_dataset(args.dataset, args.img_size)
+    dataset_train, dataset_val = get_dataset(
+        args.dataset, args.img_size, args.kernel_size, args.sigmas
+    )
 
     module = MIMOUnetModule(
         mimo_unet=MIMOUnet(),

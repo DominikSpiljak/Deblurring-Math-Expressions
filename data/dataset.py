@@ -7,17 +7,17 @@ from PIL import Image
 from data.transformations import SquarePad
 
 
-def create_transforms(
-    img_size,
-    artificial_blur=False,
-):
+def create_transforms(img_size, sigmas, kernel_size, artificial_blur=False):
     image_transformations = [
         transforms.Lambda(lambd=SquarePad()),
         transforms.Resize(img_size),
     ]
     if artificial_blur:
         image_transformations.append(
-            transforms.GaussianBlur(kernel_size=(17, 35), sigma=(4, 12))
+            transforms.GaussianBlur(
+                kernel_size=kernel_size if kernel_size is not None else 13,
+                sigma=sigmas if sigmas is not None else (4, 9),
+            )
         )
 
     tensor_transformations = [
@@ -27,7 +27,7 @@ def create_transforms(
     return transforms.Compose([*image_transformations, *tensor_transformations])
 
 
-def get_dataset(dataset_path, img_size):
+def get_dataset(dataset_path, img_size, kernel_size=None, sigmas=None):
 
     image_paths_train = []
     image_paths_val = []
