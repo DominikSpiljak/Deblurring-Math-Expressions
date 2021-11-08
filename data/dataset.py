@@ -1,5 +1,5 @@
 import csv
-
+import logging
 from torchvision import transforms
 from torch.utils import data
 from PIL import Image
@@ -13,10 +13,13 @@ def create_transforms(img_size, sigmas=None, kernel_size=None, artificial_blur=F
         transforms.Resize(img_size),
     ]
     if artificial_blur:
+        logging.info(
+            "Blur parameters are: kernel_size = %s, sigma = %s", kernel_size, sigmas
+        )
         image_transformations.append(
             transforms.GaussianBlur(
-                kernel_size=kernel_size if kernel_size is not None else 13,
-                sigma=sigmas if sigmas is not None else (4, 9),
+                kernel_size=kernel_size,
+                sigma=sigmas,
             )
         )
 

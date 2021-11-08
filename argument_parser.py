@@ -8,23 +8,28 @@ def parse_args():
         description="Script that trains/evaluates/exploits model for deblurring",
     )
 
-    parser.add_argument("--dataset", help="Path to dataset", type=Path)
-
     parser.add_argument(
-        "--img-size", help="Image size", nargs=2, default=[128, 128], type=int
+        "--dataset",
+        help="Path to dataset",
+        type=Path,
+        default=Path("/datasets/im2math/2021-11-07-dataset-full-quality/"),
     )
 
     parser.add_argument(
-        "--learning-rate", help="Learning rate of the model", type=float, default=1e-4
+        "--img-size", help="Image size", nargs=2, default=[512, 512], type=int
+    )
+
+    parser.add_argument(
+        "--learning-rate", help="Learning rate of the model", type=float, default=1e-3
     )
     parser.add_argument(
-        "--batch-size", help="Batch size for training", type=int, default=4
+        "--batch-size", help="Batch size for training", type=int, default=8
     )
     parser.add_argument(
         "--alpha", help="Alpha parameter for loss calculating", type=float, default=0.1
     )
     parser.add_argument(
-        "--log-every-n-steps", help="Time interval for logging", type=int, default=1000
+        "--log-every-n-steps", help="Time interval for logging", type=int, default=10
     )
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=8)
     parser.add_argument("--clearml-queue", help="ClearML queue used for training")
@@ -61,11 +66,15 @@ def parse_args():
         "--sigmas",
         help="Sigmas for Gaussian blur",
         nargs=2,
-        default=[7, 13],
+        default=[4, 12],
         type=float,
     )
     parser.add_argument(
-        "--kernel-size", help="Kernel size for Gaussian blur", type=int, default=11
+        "--kernel-size",
+        help="Kernel size for Gaussian blur",
+        default=[17, 35],
+        nargs=2,
+        type=int,
     )
 
     return parser.parse_args()

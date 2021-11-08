@@ -1,6 +1,7 @@
 from argument_parser import parse_args
 from data.dataset import get_dataset
 from model.mimo_unet_modules.mimo_unet import MIMOUnet
+import logging
 from model.mimo_lightning_module import MIMOUnetModule
 import pytorch_lightning as pl
 from clearml import Task, StorageManager
@@ -86,6 +87,7 @@ def _train(args):
 
 def main():
     args = parse_args()
+    logging.basicConfig(level=logging.INFO)
     _train(args)
 
 
