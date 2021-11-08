@@ -73,9 +73,7 @@ def _train(args):
         callbacks=metric_monitor_callbacks,
         log_every_n_steps=args.log_every_n_steps,
         gpus=int(args.ngpus) if str(args.ngpus).isnumeric() else args.ngpus,
-        accelerator="dp",
-        limit_train_batches=1000,
-        limit_val_batches=10,
+        accelerator="ddp",
     )
 
     if not args.eval_mode:

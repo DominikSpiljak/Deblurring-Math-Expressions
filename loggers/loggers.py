@@ -1,4 +1,5 @@
 import torch
+import logging
 from torchvision.utils import make_grid
 
 
@@ -24,17 +25,22 @@ class ImageLogger:
         ) and len(self.images) <= self.max_logged_per_epoch:
             self.images.append(
                 torch.cat(
-                    (outputs["blurred"], outputs["deblurred"]),
-                    0,
+                    (
+                        outputs["blurred"].unsqueeze(0),
+                        outputs["deblurred"].unsqueeze(0),
+                        outputs["non_blurred"].unsqueeze(0),
+                    ),
+                    1,
                 )
             )
 
     def compute(self, epoch, logger):
         for index, image in enumerate(self.images):
+            logging.info("Generating grid for image of shape %s", image.shape)
             grid = make_grid(
                 image,
                 normalize=True,
-                nrow=self.batch_size,
+                nrow=1,
             )
-            logger.experiment.add_image(f"Epoch {epoch}, batch {index}", grid, 0)
+            logger.experiment.add_images(f"Epoch {epoch}, batch {index}", grid, 0)
         self.images = []

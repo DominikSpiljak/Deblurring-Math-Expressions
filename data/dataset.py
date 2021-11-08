@@ -31,7 +31,7 @@ def get_dataset(dataset_path, img_size):
 
     image_paths_train = []
     image_paths_val = []
-    for dataset_csv in dataset_path.glob("**/*.csv"):
+    for dataset_csv in dataset_path.glob("*.csv"):
         with dataset_csv.open() as inp:
             reader = csv.reader(inp)
             for line in reader:

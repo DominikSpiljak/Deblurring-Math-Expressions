@@ -63,6 +63,7 @@ class MIMOUnetModule(pl.LightningModule):
         return {
             "blurred": batch["blurred"],
             "deblurred": out[0].detach(),
+            "non_blurred": batch["non_blurred"],
             "loss": loss,
         }
 
@@ -90,6 +91,7 @@ class MIMOUnetModule(pl.LightningModule):
         return {
             "blurred": batch["blurred"],
             "deblurred": out[0].detach(),
+            "non_blurred": batch["non_blurred"],
             "loss": loss,
         }
 
