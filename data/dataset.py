@@ -7,7 +7,7 @@ from PIL import Image
 from data.transformations import SquarePad
 
 
-def create_transforms(img_size, sigmas, kernel_size, artificial_blur=False):
+def create_transforms(img_size, sigmas=None, kernel_size=None, artificial_blur=False):
     image_transformations = [
         transforms.Lambda(lambd=SquarePad()),
         transforms.Resize(img_size),
@@ -40,7 +40,9 @@ def get_dataset(dataset_path, img_size, kernel_size=None, sigmas=None):
                 else:
                     image_paths_train.append(str(dataset_csv.parents[0] / line[1]))
 
-    blur_transformations = create_transforms(img_size, artificial_blur=True)
+    blur_transformations = create_transforms(
+        img_size, artificial_blur=True, kernel_size=kernel_size, sigmas=sigmas
+    )
     no_blur_transformations = create_transforms(img_size, artificial_blur=False)
     return (
         ImageDataset(image_paths_train, blur_transformations, no_blur_transformations),
