@@ -1,8 +1,9 @@
 import csv
 import logging
-from torchvision import transforms
-from torch.utils import data
+
 from PIL import Image
+from torch.utils import data
+from torchvision import transforms
 
 from data.transformations import SquarePad
 

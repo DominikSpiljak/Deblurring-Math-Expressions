@@ -1,6 +1,7 @@
-import torch.nn as nn
-from model.modules.utils import ResBlock
 import torch
+import torch.nn as nn
+
+from model.modules.utils import ResBlock
 
 
 class DBGenerator(nn.Module):

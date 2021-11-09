@@ -1,15 +1,14 @@
+import logging
+
+import pytorch_lightning as pl
+from clearml import StorageManager, Task
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+
 from argument_parser import parse_args
 from data.dataset import get_dataset
-from model.mimo_unet_modules.mimo_unet import MIMOUnet
-import logging
-from model.mimo_lightning_module import MIMOUnetModule
-import pytorch_lightning as pl
-from clearml import Task, StorageManager
-from pytorch_lightning.callbacks import (
-    LearningRateMonitor,
-    ModelCheckpoint,
-)
 from loggers.loggers import setup_loggers
+from model.mimo_lightning_module import MIMOUnetModule
+from model.mimo_unet_modules.mimo_unet import MIMOUnet
 
 
 def _train(args):

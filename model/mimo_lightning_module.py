@@ -1,6 +1,6 @@
 import pytorch_lightning as pl
-import torch.nn.functional as F
 import torch
+import torch.nn.functional as F
 from torch.utils import data
 
 
