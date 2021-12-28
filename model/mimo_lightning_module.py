@@ -1,12 +1,14 @@
-from argparse import Namespace
-import pytorch_lightning as pl
 import logging
+from argparse import Namespace
+
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from torch.utils import data
-from model.mimo_unet_modules.mimo_unet import MIMOUnet
-from loggers.loggers import ImageLogger
+
 from data.dataset import get_dataset
+from loggers.loggers import ImageLogger
+from model.mimo_unet_modules.mimo_unet import MIMOUnet
 
 
 def calculate_l1_loss(generated, ground_truth):
@@ -42,10 +44,6 @@ class MIMOUnetModule(pl.LightningModule):
         self.model_args = model_args
         self.training_args = training_args
         self.logger_args = logger_args
-        logging.info(self.model_args)
-        logging.info(self.data_args)
-        logging.info(self.training_args)
-        logging.info(self.logger_args)
         self.model = MIMOUnet(
             **{k: v for k, v in vars(self.model_args).items() if v is not None}
         )
