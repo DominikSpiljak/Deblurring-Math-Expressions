@@ -4,16 +4,6 @@ import torch
 from torchvision.utils import make_grid
 
 
-def setup_loggers(args, module):
-    module.train_loggers = []
-    module.validation_loggers = []
-
-    if not args.disable_image_logging:
-        module.validation_loggers.append(
-            ImageLogger(args.max_batches_logged_per_epoch, args.batch_size)
-        )
-
-
 class ImageLogger:
     def __init__(self, max_logged_per_epoch, batch_size):
         self.max_logged_per_epoch = max_logged_per_epoch

@@ -1,7 +1,12 @@
+from argparse import Namespace
 import pytorch_lightning as pl
+import logging
 import torch
 import torch.nn.functional as F
 from torch.utils import data
+from model.mimo_unet_modules.mimo_unet import MIMOUnet
+from loggers.loggers import ImageLogger
+from data.dataset import get_dataset
 
 
 def calculate_l1_loss(generated, ground_truth):
@@ -22,25 +27,54 @@ def collate_fn(batch):
 class MIMOUnetModule(pl.LightningModule):
     def __init__(
         self,
-        mimo_unet,
-        dataset_train,
-        dataset_val,
-        num_workers,
-        learning_rate=1e-3,
-        batch_size=8,
-        alpha=0.1,
+        *,
+        data_args,
+        model_args,
+        training_args,
+        logger_args,
     ):
         super().__init__()
-        self.mimo_unet = mimo_unet
-        self.dataset_train = dataset_train
-        self.dataset_val = dataset_val
-        self.learning_rate = learning_rate
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.alpha = alpha
+
+        if not isinstance(model_args, Namespace):
+            model_args = Namespace(**model_args)
+
+        self.data_args = data_args
+        self.model_args = model_args
+        self.training_args = training_args
+        self.logger_args = logger_args
+        logging.info(self.model_args)
+        logging.info(self.data_args)
+        logging.info(self.training_args)
+        logging.info(self.logger_args)
+        self.model = MIMOUnet(
+            **{k: v for k, v in vars(self.model_args).items() if v is not None}
+        )
+        self.dataset_train, self.dataset_val = self.setup_datasets()
+        self.setup_loggers()
+        self.save_hyperparameters("model_args")
+
+    def setup_loggers(self):
+        self.train_loggers = []
+        self.validation_loggers = []
+
+        if not self.logger_args.disable_image_logging:
+            self.validation_loggers.append(
+                ImageLogger(
+                    self.logger_args.max_batches_logged_per_epoch,
+                    self.training_args.batch_size,
+                )
+            )
+
+    def setup_datasets(self):
+        return get_dataset(
+            self.data_args.dataset,
+            self.data_args.img_size,
+            kernel_size=self.data_args.kernel_size,
+            sigmas=self.data_args.sigmas,
+        )
 
     def training_step(self, batch, batch_idx):
-        out = self.mimo_unet(batch["blurred"])
+        out = self.model(batch["blurred"])
         gt = [
             batch["non_blurred"],
             F.interpolate(batch["non_blurred"], scale_factor=0.5),
@@ -58,7 +92,7 @@ class MIMOUnetModule(pl.LightningModule):
             + calculate_frequency_reconstruction_loss(out[2], gt[2])
         ) / 3
 
-        loss = content_loss + self.alpha * msfr_loss
+        loss = content_loss + self.training_args.alpha * msfr_loss
 
         return {
             "blurred": batch["blurred"],
@@ -68,7 +102,7 @@ class MIMOUnetModule(pl.LightningModule):
         }
 
     def validation_step(self, batch, batch_idx):
-        out = self.mimo_unet(batch["blurred"])
+        out = self.model(batch["blurred"])
         gt = [
             batch["non_blurred"],
             F.interpolate(batch["non_blurred"], scale_factor=0.5),
@@ -86,7 +120,7 @@ class MIMOUnetModule(pl.LightningModule):
             + calculate_frequency_reconstruction_loss(out[2], gt[2])
         ) / 3
 
-        loss = content_loss + self.alpha * msfr_loss
+        loss = content_loss + self.training_args.alpha * msfr_loss
 
         return {
             "blurred": batch["blurred"],
@@ -114,7 +148,9 @@ class MIMOUnetModule(pl.LightningModule):
         self.compute_loggers(self.train_loggers, self.current_epoch, self.logger)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.mimo_unet.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=self.training_args.learning_rate
+        )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode="min", factor=0.9, patience=3, threshold=1e-5
         )
@@ -135,9 +171,9 @@ class MIMOUnetModule(pl.LightningModule):
     def train_dataloader(self):
         dataloader = data.DataLoader(
             self.dataset_train,
-            batch_size=self.batch_size,
+            batch_size=self.training_args.batch_size,
             shuffle=True,
-            num_workers=self.num_workers,
+            num_workers=self.training_args.num_workers,
             pin_memory=True,
             collate_fn=collate_fn,
         )
@@ -147,9 +183,9 @@ class MIMOUnetModule(pl.LightningModule):
     def val_dataloader(self):
         dataloader = data.DataLoader(
             self.dataset_val,
-            batch_size=self.batch_size,
+            batch_size=self.training_args.batch_size,
             shuffle=True,
-            num_workers=self.num_workers,
+            num_workers=self.training_args.num_workers,
             pin_memory=True,
             collate_fn=collate_fn,
         )
