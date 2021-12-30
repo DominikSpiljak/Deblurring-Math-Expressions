@@ -87,7 +87,7 @@ class RealisticBlurrerModule(pl.LightningModule):
 
             return {
                 "loss": g_loss,
-                "non_blurred": batch,
+                "non_blurred": non_blurred_images,
                 "blurred": blurred.detach(),
                 "optimizer_idx": optimizer_idx,
             }
