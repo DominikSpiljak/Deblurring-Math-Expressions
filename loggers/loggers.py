@@ -32,7 +32,7 @@ class ImageLogger:
             grid = make_grid(
                 image,
                 normalize=True,
-                nrow=1,
+                nrow=image.size(0),
             )
             logger.experiment.add_images(f"Epoch {epoch}, batch {index}", grid, 0)
         self.images = []

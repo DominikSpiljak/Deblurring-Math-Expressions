@@ -67,8 +67,8 @@ class RealisticBlurrerModule(pl.LightningModule):
 
     def setup_datasets(self):
         return get_dataset_blur(
-            self.data_args.dataset,
             self.data_args.dataset_blurred,
+            self.data_args.dataset,
             self.data_args.img_size,
         )
 
