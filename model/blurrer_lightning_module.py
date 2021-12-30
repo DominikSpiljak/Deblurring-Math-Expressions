@@ -75,7 +75,7 @@ class RealisticBlurrerModule(pl.LightningModule):
     def training_step(self, batch, batch_idx, optimizer_idx):
         non_blurred_images, blurred_images = batch
         if optimizer_idx == 0:
-            fake_labels = torch.zeros(non_blurred_images.size(0), 1, device=self.device)
+            fake_labels = torch.ones(non_blurred_images.size(0), 1, device=self.device)
             blurred = self.g_model(non_blurred_images)
 
             prediction = self.d_model(blurred)
