@@ -75,12 +75,12 @@ class RealisticBlurrerModule(pl.LightningModule):
     def training_step(self, batch, batch_idx, optimizer_idx):
         non_blurred_images, blurred_images = batch
         if optimizer_idx == 0:
-            fake_labels = torch.zeros(batch.size(0), 1, device=self.device)
+            fake_labels = torch.zeros(non_blurred_images.size(0), 1, device=self.device)
             blurred = self.g_model(non_blurred_images)
 
             prediction = self.d_model(blurred)
             g_loss_bce = calculate_bce_loss(prediction, fake_labels)
-            g_loss_l1 = calculate_l1_loss(blurred, batch)
+            g_loss_l1 = calculate_l1_loss(blurred, non_blurred_images)
 
             g_loss = g_loss_l1 + g_loss_bce * self.training_args.alpha
             self.log("Generator loss", g_loss, prog_bar=True)
@@ -108,24 +108,18 @@ class RealisticBlurrerModule(pl.LightningModule):
 
             return {"loss": d_loss, "optimizer_idx": optimizer_idx}
 
-    def validation_step(self, batch, batch_idx, optimizer_idx):
-        if optimizer_idx == 0:
-            fake_labels = torch.zeros(batch.size(0), 1, device=self.device)
-            blurred = self.g_model(batch)
+    def validation_step(self, batch, batch_idx):
+        fake_labels = torch.zeros(batch.size(0), 1, device=self.device)
+        blurred = self.g_model(batch)
 
-            prediction = self.d_model(blurred)
-            g_loss_bce = calculate_bce_loss(prediction, fake_labels)
-            g_loss_l1 = calculate_l1_loss(blurred, batch)
+        prediction = self.d_model(blurred)
+        g_loss_bce = calculate_bce_loss(prediction, fake_labels)
+        g_loss_l1 = calculate_l1_loss(blurred, batch)
 
-            g_loss = g_loss_l1 + g_loss_bce * self.training_args.alpha
-            self.log("Generator loss", g_loss, prog_bar=True)
+        g_loss = g_loss_l1 + g_loss_bce * self.training_args.alpha
+        self.log("Generator loss", g_loss, prog_bar=True)
 
-            return {
-                "loss": g_loss,
-                "non_blurred": batch,
-                "blurred": blurred.detach(),
-                "optimizer_idx": optimizer_idx,
-            }
+        return {"loss": g_loss, "non_blurred": batch, "blurred": blurred.detach()}
 
     def validation_step_end(self, outputs):
         self.log_metrics(self.validation_loggers, outputs)
@@ -146,8 +140,12 @@ class RealisticBlurrerModule(pl.LightningModule):
         self.compute_loggers(self.train_loggers, self.current_epoch, self.logger)
 
     def configure_optimizers(self):
-        g_optimizer = torch.optim.Adam(self.g_model.parameters(), lr=self.learning_rate)
-        d_optimizer = torch.optim.Adam(self.d_model.parameters(), lr=self.learning_rate)
+        g_optimizer = torch.optim.Adam(
+            self.g_model.parameters(), lr=self.training_args.learning_rate
+        )
+        d_optimizer = torch.optim.Adam(
+            self.d_model.parameters(), lr=self.training_args.learning_rate
+        )
 
         g_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             g_optimizer, mode="min", factor=0.9, patience=3, min_lr=1e-5
@@ -158,13 +156,17 @@ class RealisticBlurrerModule(pl.LightningModule):
         return (
             {
                 "optimizer": g_optimizer,
-                "lr_scheduler": g_scheduler,
-                "monitor": "Validation loss",
+                "lr_scheduler": {
+                    "scheduler": g_scheduler,
+                    "monitor": "Validation loss",
+                },
             },
             {
                 "optimizer": d_optimizer,
-                "lr_scheduler": d_scheduler,
-                "monitor": "Validation loss",
+                "lr_scheduler": {
+                    "scheduler": d_scheduler,
+                    "monitor": "Validation loss",
+                },
             },
         )
 
@@ -183,6 +185,7 @@ class RealisticBlurrerModule(pl.LightningModule):
             shuffle=True,
             num_workers=self.training_args.num_workers,
             pin_memory=True,
+            collate_fn=collate_fn,
         )
 
         return dataloader
