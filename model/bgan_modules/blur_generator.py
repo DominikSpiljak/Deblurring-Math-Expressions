@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 
-from model.modules.utils import ResBlock
+from model.bgan_modules.utils import ResBlock
 
 
-class DBGenerator(nn.Module):
+class BGenerator(nn.Module):
     def __init__(
         self,
         input_channels=3,

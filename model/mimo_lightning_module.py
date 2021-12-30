@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils import data
 
-from data.dataset import get_dataset
+from data.dataset import get_dataset_deblur
 from loggers.loggers import ImageLogger
 from model.mimo_unet_modules.mimo_unet import MIMOUnet
 
@@ -64,7 +64,7 @@ class MIMOUnetModule(pl.LightningModule):
             )
 
     def setup_datasets(self):
-        return get_dataset(
+        return get_dataset_deblur(
             self.data_args.dataset,
             self.data_args.img_size,
             kernel_size=self.data_args.kernel_size,
@@ -150,7 +150,7 @@ class MIMOUnetModule(pl.LightningModule):
             self.model.parameters(), lr=self.training_args.learning_rate
         )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="min", factor=0.9, patience=3, threshold=1e-5
+            optimizer, mode="min", factor=0.9, patience=3, min_lr=1e-5
         )
         return {
             "optimizer": optimizer,

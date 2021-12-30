@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 class DotDict(dict):
+    # Simple dict where values can be accessed with dot annotation
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__  # type: ignore
     __delattr__ = dict.__delitem__  # type: ignore
@@ -25,6 +26,12 @@ def parse_args():
         help="Path to dataset",
         type=Path,
         default=Path("/datasets/im2math/2021-11-07-dataset-full-quality/"),
+    )
+    data.add_argument(
+        "--dataset-blurred",
+        help="Path to blurred dataset",
+        type=Path,
+        default=Path("/datasets/im2math/2021-12-16-dataset-blued/"),
     )
 
     data.add_argument(
@@ -112,6 +119,7 @@ def parse_args():
 
     args = parser.parse_args()
 
+    # Transform the Namespace into a dict with groups
     arg_groups = DotDict()
 
     for group in parser._action_groups:

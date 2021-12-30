@@ -8,7 +8,7 @@ from argument_parser import parse_args
 from model.mimo_lightning_module import MIMOUnetModule
 
 
-def _train(args):
+def _train(args, pl_module):
     Task.force_requirements_env_freeze(False, "requirements.txt")
 
     task = Task.init(
@@ -36,7 +36,7 @@ def _train(args):
         )
         task.execute_remotely(queue_name=args.clearml.clearml_queue)
 
-    module = MIMOUnetModule(
+    module = pl_module(
         data_args=args.data,
         model_args=args.model,
         training_args=args.training,
@@ -48,7 +48,7 @@ def _train(args):
         else:
             model_checkpoint = args.training.checkpoint
 
-        module = MIMOUnetModule.load_from_checkpoint(
+        module = pl_module.load_from_checkpoint(
             model_checkpoint,
             data_args=args.data,
             training_args=args.training,
@@ -87,7 +87,7 @@ def _train(args):
 def main():
     args = parse_args()
     logging.basicConfig(level=logging.INFO)
-    _train(args)
+    _train(args, pl_module=MIMOUnetModule)
 
 
 if __name__ == "__main__":

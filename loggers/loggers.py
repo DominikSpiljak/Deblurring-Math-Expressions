@@ -9,6 +9,7 @@ class ImageLogger:
         self.max_logged_per_epoch = max_logged_per_epoch
         self.batch_size = batch_size
         self.images = []
+        self.categories = ["blurred", "non_blurred", "deblurred"]
 
     def __call__(self, outputs):
         if (
@@ -16,10 +17,10 @@ class ImageLogger:
         ) and len(self.images) <= self.max_logged_per_epoch:
             self.images.append(
                 torch.cat(
-                    (
-                        outputs["blurred"].unsqueeze(0),
-                        outputs["deblurred"].unsqueeze(0),
-                        outputs["non_blurred"].unsqueeze(0),
+                    tuple(
+                        outputs[category].unsqueeze(0)
+                        for category in self.categories
+                        if category in outputs
                     ),
                     1,
                 )
