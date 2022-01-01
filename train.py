@@ -73,7 +73,7 @@ def _train(args, pl_module):
         gpus=int(args.clearml.ngpus)
         if str(args.clearml.ngpus).isnumeric()
         else args.clearml.ngpus,
-        accelerator="ddp",
+        strategy="dp",
         limit_train_batches=args.training.limit_train_batches,
         limit_val_batches=args.training.limit_val_batches,
     )

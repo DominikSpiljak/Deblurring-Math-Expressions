@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.models import resnet18
 
 
 class Discriminator(nn.Module):
@@ -123,3 +124,12 @@ class Discriminator(nn.Module):
         x = self.classifier(x)
 
         return x
+
+
+class ResNet18Discriminator(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = resnet18(num_classes=1)
+
+    def forward(self, x):
+        return self.model(x)

@@ -5,9 +5,10 @@ from model.bgan_modules.utils import ResBlock
 
 
 class BGenerator(nn.Module):
+    # Additional input channel because of the noise
     def __init__(
         self,
-        input_channels=3,
+        input_channels=4,
         num_res_blocks=16,
         res_blocks_dim=63,
         res_kernel_size=3,

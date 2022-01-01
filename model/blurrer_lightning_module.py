@@ -9,7 +9,7 @@ from torch.utils import data
 from data.dataset import get_dataset_blur
 from loggers.loggers import ImageLogger
 from model.bgan_modules.blur_generator import BGenerator
-from model.bgan_modules.discriminator import Discriminator
+from model.bgan_modules.discriminator import Discriminator, ResNet18Discriminator
 
 
 def calculate_bce_loss(predictions, real):
@@ -48,7 +48,7 @@ class RealisticBlurrerModule(pl.LightningModule):
         self.g_model = BGenerator(
             **{k: v for k, v in vars(self.model_args).items() if v is not None}
         )
-        self.d_model = Discriminator()
+        self.d_model = ResNet18Discriminator()
         self.dataset_train, self.dataset_val = self.setup_datasets()
         self.setup_loggers()
         self.save_hyperparameters("model_args")
@@ -67,16 +67,21 @@ class RealisticBlurrerModule(pl.LightningModule):
 
     def setup_datasets(self):
         return get_dataset_blur(
-            self.data_args.dataset_blurred,
-            self.data_args.dataset,
-            self.data_args.img_size,
+            blurred_dataset_path=self.data_args.dataset_blurred,
+            non_blurred_dataset_path=self.data_args.dataset,
+            img_size=self.data_args.img_size,
         )
+
+    def generator_forward(self, batch):
+        noise = torch.randn((batch.shape[0], 1, *batch.shape[2:]), device=self.device)
+        g_input = torch.cat((batch, noise), dim=1)
+        return self.g_model(g_input)
 
     def training_step(self, batch, batch_idx, optimizer_idx):
         non_blurred_images, blurred_images = batch
         if optimizer_idx == 0:
             real_labels = torch.ones(non_blurred_images.size(0), 1, device=self.device)
-            blurred = self.g_model(non_blurred_images)
+            blurred = self.generator_forward(non_blurred_images)
 
             prediction = self.d_model(blurred)
             g_loss_bce = calculate_bce_loss(prediction, real_labels)
@@ -99,7 +104,9 @@ class RealisticBlurrerModule(pl.LightningModule):
             prediction = self.d_model(blurred_images)
             d_real_loss = calculate_bce_loss(prediction, real_labels)
 
-            prediction = self.d_model(self.g_model(non_blurred_images).detach())
+            prediction = self.d_model(
+                self.generator_forward(non_blurred_images).detach()
+            )
             d_fake_loss = calculate_bce_loss(prediction, fake_labels)
 
             d_loss = (d_real_loss + d_fake_loss) / 2.0
@@ -109,11 +116,11 @@ class RealisticBlurrerModule(pl.LightningModule):
             return {"loss": d_loss, "optimizer_idx": optimizer_idx}
 
     def validation_step(self, batch, batch_idx):
-        fake_labels = torch.zeros(batch.size(0), 1, device=self.device)
-        blurred = self.g_model(batch)
+        real_labels = torch.ones(batch.size(0), 1, device=self.device)
+        blurred = self.generator_forward(batch)
 
         prediction = self.d_model(blurred)
-        g_loss_bce = calculate_bce_loss(prediction, fake_labels)
+        g_loss_bce = calculate_bce_loss(prediction, real_labels)
         g_loss_l1 = calculate_l1_loss(blurred, batch)
 
         g_loss = g_loss_l1 + g_loss_bce * self.training_args.alpha
