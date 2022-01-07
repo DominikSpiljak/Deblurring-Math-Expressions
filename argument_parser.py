@@ -78,6 +78,9 @@ def parse_args():
     )
     training.add_argument("--checkpoint", help="Bucket path to checkpoint")
     training.add_argument(
+        "--blurrer-checkpoint", help="Bucket path to blurrer checkpoint"
+    )
+    training.add_argument(
         "--limit-train-batches", help="Maximum train batches for an epoch", default=256
     )
     training.add_argument(

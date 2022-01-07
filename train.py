@@ -8,7 +8,7 @@ from argument_parser import parse_args
 from model.mimo_lightning_module import MIMOUnetModule
 
 
-def _train(args, pl_module):
+def _train(args, pl_module, checkpoint):
     Task.force_requirements_env_freeze(False, "requirements.txt")
 
     task = Task.init(
@@ -42,11 +42,11 @@ def _train(args, pl_module):
         training_args=args.training,
         logger_args=args.logging,
     )
-    if args.training.checkpoint:
-        if str(args.training.checkpoint).startswith("gs"):
-            model_checkpoint = StorageManager.get_local_copy(args.training.checkpoint)
+    if checkpoint:
+        if str(checkpoint).startswith("gs"):
+            model_checkpoint = StorageManager.get_local_copy(checkpoint)
         else:
-            model_checkpoint = args.training.checkpoint
+            model_checkpoint = checkpoint
 
         module = pl_module.load_from_checkpoint(
             model_checkpoint,
@@ -87,7 +87,7 @@ def _train(args, pl_module):
 def main():
     args = parse_args()
     logging.basicConfig(level=logging.INFO)
-    _train(args, pl_module=MIMOUnetModule)
+    _train(args, pl_module=MIMOUnetModule, checkpoint=args.training.checkpoint)
 
 
 if __name__ == "__main__":

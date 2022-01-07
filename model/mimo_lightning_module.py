@@ -60,6 +60,7 @@ class MIMOUnetModule(pl.LightningModule):
                 ImageLogger(
                     self.logger_args.max_batches_logged_per_epoch,
                     self.training_args.batch_size,
+                    ["blurred", "deblurred", "non_blurred"],
                 )
             )
 

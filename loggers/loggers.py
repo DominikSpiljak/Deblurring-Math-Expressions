@@ -5,11 +5,11 @@ from torchvision.utils import make_grid
 
 
 class ImageLogger:
-    def __init__(self, max_logged_per_epoch, batch_size):
+    def __init__(self, max_logged_per_epoch, batch_size, categories):
         self.max_logged_per_epoch = max_logged_per_epoch
         self.batch_size = batch_size
         self.images = []
-        self.categories = ["blurred", "non_blurred", "deblurred"]
+        self.categories = categories
 
     def __call__(self, outputs):
         if (
