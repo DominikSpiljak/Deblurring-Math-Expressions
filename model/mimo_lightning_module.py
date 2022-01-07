@@ -1,4 +1,4 @@
-import logging
+from clearml import StorageManager
 from argparse import Namespace
 
 import pytorch_lightning as pl
@@ -9,6 +9,21 @@ from torch.utils import data
 from data.dataset import get_dataset_deblur
 from loggers.loggers import ImageLogger
 from model.mimo_unet_modules.mimo_unet import MIMOUnet
+from model.blurrer_lightning_module import RealisticBlurrerModule
+
+
+def extract_blurrer(checkpoint, **kwargs):
+    if not checkpoint:
+        return None
+    else:
+        if str(checkpoint).startswith("gs"):
+            model_checkpoint = StorageManager.get_local_copy(checkpoint)
+        else:
+            model_checkpoint = checkpoint
+    module = RealisticBlurrerModule.load_from_checkpoint(
+        model_checkpoint, loaded_from_checkpoint=True, **kwargs
+    )
+    return module.g_model
 
 
 def calculate_l1_loss(generated, ground_truth):
@@ -47,6 +62,16 @@ class MIMOUnetModule(pl.LightningModule):
         self.model = MIMOUnet(
             **{k: v for k, v in vars(self.model_args).items() if v is not None}
         )
+        if self.training_args.blurrer_checkpoint:
+            self.blurrer = extract_blurrer(
+                self.training_args.blurrer_checkpoint,
+                data_args=self.data_args,
+                training_args=self.training_args,
+                logger_args=self.logger_args,
+            )
+        else:
+            self.blurrer = None
+
         self.dataset_train, self.dataset_val = self.setup_datasets()
         self.setup_loggers()
         self.save_hyperparameters("model_args")
@@ -68,12 +93,22 @@ class MIMOUnetModule(pl.LightningModule):
         return get_dataset_deblur(
             self.data_args.dataset,
             self.data_args.img_size,
+            blurrer=self.blurrer is not None,
             kernel_size=self.data_args.kernel_size,
             sigmas=self.data_args.sigmas,
         )
 
+    def blurrer_forward(self, batch):
+        noise = torch.randn((batch.shape[0], 1, *batch.shape[2:]), device=self.device)
+        g_input = torch.cat((batch, noise), dim=1)
+        return self.blurrer(g_input)
+
     def training_step(self, batch, batch_idx):
-        out = self.model(batch["blurred"])
+        if self.blurrer:
+            blurred_input = self.blurrer_forward(batch["blurred"])
+        else:
+            blurred_input = batch["blurred"]
+        out = self.model(blurred_input)
         gt = [
             batch["non_blurred"],
             F.interpolate(batch["non_blurred"], scale_factor=0.5),
@@ -94,14 +129,18 @@ class MIMOUnetModule(pl.LightningModule):
         loss = content_loss + self.training_args.alpha * msfr_loss
 
         return {
-            "blurred": batch["blurred"],
+            "blurred": blurred_input,
             "deblurred": out[0].detach(),
             "non_blurred": batch["non_blurred"],
             "loss": loss,
         }
 
     def validation_step(self, batch, batch_idx):
-        out = self.model(batch["blurred"])
+        if self.blurrer:
+            blurred_input = self.blurrer_forward(batch["blurred"])
+        else:
+            blurred_input = batch["blurred"]
+        out = self.model(blurred_input)
         gt = [
             batch["non_blurred"],
             F.interpolate(batch["non_blurred"], scale_factor=0.5),
@@ -122,7 +161,7 @@ class MIMOUnetModule(pl.LightningModule):
         loss = content_loss + self.training_args.alpha * msfr_loss
 
         return {
-            "blurred": batch["blurred"],
+            "blurred": blurred_input,
             "deblurred": out[0].detach(),
             "non_blurred": batch["non_blurred"],
             "loss": loss,
