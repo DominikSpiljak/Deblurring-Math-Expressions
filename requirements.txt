@@ -1,8 +1,10 @@
-numpy
-opencv-python
-torch
-torchvision
-pytorch-lightning
-clearml
-google-cloud-storage
-albumentations
+clearml == 1.0.5
+google-cloud-storage==1.41
+numpy == 1.19.5
+opencv_python_headless == 4.5.1.48
+pytorch_lightning
+torch == 1.10.0
+torchmetrics >= 0.4.0
+torchvision == 0.11.1
+albumentations == 1.0.3
+optuna == 2.10.0

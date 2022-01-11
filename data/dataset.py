@@ -17,7 +17,7 @@ def create_transforms(img_size, blurrer=False, artificial_blur=False):
         transforms.Resize(img_size),
     ]
     if artificial_blur and not blurrer:
-        image_transformations.append(Albumentations())
+        image_transformations.append(transforms.Lambda(lambd=Albumentations()))
 
     tensor_transformations = [
         transforms.ToTensor(),
