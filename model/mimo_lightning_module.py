@@ -94,8 +94,6 @@ class MIMOUnetModule(pl.LightningModule):
             self.data_args.dataset,
             self.data_args.img_size,
             blurrer=self.blurrer is not None,
-            kernel_size=self.data_args.kernel_size,
-            sigmas=self.data_args.sigmas,
         )
 
     def blurrer_forward(self, batch):

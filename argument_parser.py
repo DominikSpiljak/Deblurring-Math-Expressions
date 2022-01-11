@@ -37,20 +37,6 @@ def parse_args():
     data.add_argument(
         "--img-size", help="Image size", nargs=2, default=[512, 512], type=int
     )
-    data.add_argument(
-        "--sigmas",
-        help="Sigmas for Gaussian blur",
-        nargs=2,
-        default=[4, 12],
-        type=float,
-    )
-    data.add_argument(
-        "--kernel-size",
-        help="Kernel size for Gaussian blur",
-        default=[17, 35],
-        nargs=2,
-        type=int,
-    )
 
     model.add_argument(
         "--num-res-blocks",

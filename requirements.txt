@@ -5,3 +5,4 @@ torchvision
 pytorch-lightning
 clearml
 google-cloud-storage
+albumentations

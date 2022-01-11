@@ -7,26 +7,17 @@ from torch.utils import data
 from torchvision import transforms
 import torch.nn as nn
 
+from data.augmentations import Albumentations
 from data.transformations import SquarePad
 
 
-def create_transforms(
-    img_size, blurrer=False, sigmas=None, kernel_size=None, artificial_blur=False
-):
+def create_transforms(img_size, blurrer=False, artificial_blur=False):
     image_transformations = [
         transforms.Lambda(lambd=SquarePad()),
         transforms.Resize(img_size),
     ]
     if artificial_blur and not blurrer:
-        logging.info(
-            "Blur parameters are: kernel_size = %s, sigma = %s", kernel_size, sigmas
-        )
-        image_transformations.append(
-            transforms.GaussianBlur(
-                kernel_size=kernel_size,
-                sigma=sigmas,
-            )
-        )
+        image_transformations.append(Albumentations())
 
     tensor_transformations = [
         transforms.ToTensor(),
@@ -53,17 +44,13 @@ def collect_images(dataset_path, validation=True):
         return image_paths_train
 
 
-def get_dataset_deblur(
-    dataset_path, img_size, blurrer=False, kernel_size=None, sigmas=None
-):
+def get_dataset_deblur(dataset_path, img_size, blurrer=False):
     image_paths_train, image_paths_val = collect_images(dataset_path, validation=True)
 
     blur_transformations = create_transforms(
         img_size,
         artificial_blur=True,
         blurrer=blurrer,
-        kernel_size=kernel_size,
-        sigmas=sigmas,
     )
     no_blur_transformations = create_transforms(img_size, artificial_blur=False)
     return (

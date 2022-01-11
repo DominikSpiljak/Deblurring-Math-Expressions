@@ -12,7 +12,7 @@ def _train(args, pl_module, checkpoint):
     Task.force_requirements_env_freeze(False, "requirements.txt")
 
     task = Task.init(
-        project_name="im2math",
+        project_name="deblurring",
         task_name=args.clearml.task_name,
         output_uri="gs://ai-experiments-artifacts",
         task_type=Task.TaskTypes.testing
