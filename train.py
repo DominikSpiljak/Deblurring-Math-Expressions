@@ -8,7 +8,7 @@ from argument_parser import parse_args
 from model.mimo_lightning_module import MIMOUnetModule
 
 
-def _train(args, pl_module, checkpoint):
+def _train(args, pl_module, checkpoint, no_test=False):
     Task.force_requirements_env_freeze(False, "requirements.txt")
 
     task = Task.init(
@@ -76,12 +76,16 @@ def _train(args, pl_module, checkpoint):
         strategy="dp",
         limit_train_batches=args.training.limit_train_batches,
         limit_val_batches=args.training.limit_val_batches,
+        limit_test_batches=args.training.limit_test_batches,
     )
 
     if not args.training.eval_mode:
         trainer.fit(module)
 
     trainer.validate(module)
+
+    if not no_test:
+        trainer.test(module)
 
 
 def main():

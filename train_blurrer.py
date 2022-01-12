@@ -11,6 +11,7 @@ def main():
         args,
         pl_module=RealisticBlurrerModule,
         checkpoint=args.training.blurrer_checkpoint,
+        no_test=True,
     )
 
 

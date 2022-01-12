@@ -44,8 +44,9 @@ def collect_images(dataset_path, validation=True):
         return image_paths_train
 
 
-def get_dataset_deblur(dataset_path, img_size, blurrer=False):
+def get_dataset_deblur(dataset_path, blurred_dataset_path, img_size, blurrer=False):
     image_paths_train, image_paths_val = collect_images(dataset_path, validation=True)
+    image_paths_test = collect_images(blurred_dataset_path, validation=False)
 
     blur_transformations = create_transforms(
         img_size,
@@ -60,6 +61,7 @@ def get_dataset_deblur(dataset_path, img_size, blurrer=False):
         DeblurImageDataset(
             image_paths_val, blur_transformations, no_blur_transformations
         ),
+        BlurImageDataset(image_paths_test, no_blur_transformations),
     )
 
 

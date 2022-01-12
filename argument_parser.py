@@ -74,6 +74,11 @@ def parse_args():
         help="Maximum validation batches for an epoch",
         default=64,
     )
+    training.add_argument(
+        "--limit-test-batches",
+        help="Maximum test batches for an epoch",
+        default=64,
+    )
     clearml.add_argument("--clearml-queue", help="ClearML queue used for training")
     clearml.add_argument(
         "--task-name",

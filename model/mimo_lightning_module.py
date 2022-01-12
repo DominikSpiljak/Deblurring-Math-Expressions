@@ -72,13 +72,14 @@ class MIMOUnetModule(pl.LightningModule):
         else:
             self.blurrer = None
 
-        self.dataset_train, self.dataset_val = self.setup_datasets()
+        self.dataset_train, self.dataset_val, self.dataset_test = self.setup_datasets()
         self.setup_loggers()
         self.save_hyperparameters("model_args")
 
     def setup_loggers(self):
         self.train_loggers = []
         self.validation_loggers = []
+        self.test_loggers = []
 
         if not self.logger_args.disable_image_logging:
             self.validation_loggers.append(
@@ -86,12 +87,22 @@ class MIMOUnetModule(pl.LightningModule):
                     self.logger_args.max_batches_logged_per_epoch,
                     self.training_args.batch_size,
                     ["blurred", "deblurred", "non_blurred"],
+                    "Validation",
+                )
+            )
+            self.test_loggers.append(
+                ImageLogger(
+                    self.logger_args.max_batches_logged_per_epoch,
+                    self.training_args.batch_size,
+                    ["blurred", "deblurred"],
+                    "Test",
                 )
             )
 
     def setup_datasets(self):
         return get_dataset_deblur(
             self.data_args.dataset,
+            self.data_args.dataset_blurred,
             self.data_args.img_size,
             blurrer=self.blurrer is not None,
         )
@@ -165,20 +176,37 @@ class MIMOUnetModule(pl.LightningModule):
             "loss": loss,
         }
 
-    def validation_step_end(self, outputs):
-        self.log_metrics(self.validation_loggers, outputs)
-        loss = torch.mean(outputs["loss"])
-        self.log("Validation loss", loss)
-        return loss
-
-    def on_validation_epoch_end(self):
-        self.compute_loggers(self.validation_loggers, self.current_epoch, self.logger)
+    def test_step(self, batch, batch_idx):
+        out = self.model(batch)
+        return {
+            "blurred": batch,
+            "deblurred": out[0].detach(),
+            "loss": 0.0,
+        }
 
     def training_step_end(self, outputs):
         self.log_metrics(self.train_loggers, outputs)
         loss = torch.mean(outputs["loss"])
         self.log("Train loss", loss)
         return loss
+
+    def validation_step_end(self, outputs):
+        self.log_metrics(self.validation_loggers, outputs)
+        loss = torch.mean(outputs["loss"])
+        self.log("Validation loss", loss)
+        return loss
+
+    def test_step_end(self, outputs):
+        self.log_metrics(self.test_loggers, outputs)
+        loss = torch.mean(outputs["loss"])
+        self.log("Test loss", loss)
+        return loss
+
+    def on_validation_epoch_end(self):
+        self.compute_loggers(self.validation_loggers, self.current_epoch, self.logger)
+
+    def on_test_epoch_end(self):
+        self.compute_loggers(self.test_loggers, self.current_epoch, self.logger)
 
     def on_train_epoch_end(self):
         self.compute_loggers(self.train_loggers, self.current_epoch, self.logger)
@@ -224,6 +252,17 @@ class MIMOUnetModule(pl.LightningModule):
             num_workers=self.training_args.num_workers,
             pin_memory=True,
             collate_fn=collate_fn,
+        )
+
+        return dataloader
+
+    def test_dataloader(self):
+        dataloader = data.DataLoader(
+            self.dataset_test,
+            batch_size=self.training_args.batch_size,
+            shuffle=True,
+            num_workers=self.training_args.num_workers,
+            pin_memory=True,
         )
 
         return dataloader

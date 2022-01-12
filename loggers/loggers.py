@@ -5,11 +5,12 @@ from torchvision.utils import make_grid
 
 
 class ImageLogger:
-    def __init__(self, max_logged_per_epoch, batch_size, categories):
+    def __init__(self, max_logged_per_epoch, batch_size, categories, prefix):
         self.max_logged_per_epoch = max_logged_per_epoch
         self.batch_size = batch_size
         self.images = []
         self.categories = categories
+        self.prefix = prefix
 
     def __call__(self, outputs):
         if (
@@ -34,5 +35,7 @@ class ImageLogger:
                 normalize=True,
                 nrow=image.size(0),
             )
-            logger.experiment.add_images(f"Epoch {epoch}, batch {index}", grid, 0)
+            logger.experiment.add_images(
+                f"{self.prefix}: Epoch {epoch}, batch {index}", grid, 0
+            )
         self.images = []
