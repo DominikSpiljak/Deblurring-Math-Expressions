@@ -13,10 +13,10 @@ class Albumentations:
     def __init__(self):
         self.augmentations = albumentations.Compose(
             [
-                MotionBlur(p=0.7, blur_limit=(7, 59)),
-                Blur(p=0.7, blur_limit=(7, 59)),
-                GaussianBlur(p=0.7, blur_limit=(7, 59)),
-                MedianBlur(p=0.7, blur_limit=(7, 59)),
+                MotionBlur(p=0.9, blur_limit=(9, 17)),
+                Blur(p=0.9, blur_limit=(9, 17)),
+                GaussianBlur(p=0.9, blur_limit=(9, 17)),
+                MedianBlur(p=0.9, blur_limit=(9, 17)),
             ]
         )
 
