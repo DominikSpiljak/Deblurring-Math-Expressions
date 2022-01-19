@@ -14,7 +14,7 @@ def _train(args, pl_module, checkpoint, no_test=False):
     task = Task.init(
         project_name="deblurring",
         task_name=args.clearml.task_name,
-        output_uri="gs://ai-experiments-artifacts",
+        output_uri=args.logging.bucket_path,
         task_type=Task.TaskTypes.testing
         if args.training.eval_mode
         else Task.TaskTypes.training,

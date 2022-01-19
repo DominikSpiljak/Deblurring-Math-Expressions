@@ -62,15 +62,21 @@ class MIMOUnetModule(pl.LightningModule):
         self.model = MIMOUnet(
             **{k: v for k, v in vars(self.model_args).items() if v is not None}
         )
-        if self.training_args.blurrer_checkpoint:
-            self.blurrer = extract_blurrer(
-                self.training_args.blurrer_checkpoint,
-                data_args=self.data_args,
-                training_args=self.training_args,
-                logger_args=self.logger_args,
-            )
-        else:
-            self.blurrer = None
+        self.blurrer = RealisticBlurrerModule(
+            data_args=data_args,
+            model_args=model_args,
+            training_args=training_args,
+            logger_args=logger_args,
+        )
+
+        """self.blurrer = extract_blurrer(
+            self.training_args.blurrer_checkpoint,
+            data_args=self.data_args,
+            training_args=self.training_args,
+            logger_args=self.logger_args,
+        )"""
+
+        self.blurrer = self.blurrer.g_model
 
         self.dataset_train, self.dataset_val, self.dataset_test = self.setup_datasets()
         self.setup_loggers()

@@ -110,6 +110,11 @@ def parse_args():
     logging.add_argument(
         "--save-top-k", help="Top k checkpoints to save", type=int, default=1
     )
+    logging.add_argument(
+        "--bucket-path",
+        help="Path to the bucket for saving artifacts",
+        default="gs://ai-experiments-artifacts",
+    )
 
     args = parser.parse_args()
 

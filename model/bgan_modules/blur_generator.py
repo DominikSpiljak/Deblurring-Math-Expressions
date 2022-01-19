@@ -10,7 +10,7 @@ class BGenerator(nn.Module):
         self,
         input_channels=4,
         num_res_blocks=16,
-        res_blocks_dim=63,
+        res_blocks_dim=64,
         res_kernel_size=3,
         lrelu_slope=0.01,
     ):
